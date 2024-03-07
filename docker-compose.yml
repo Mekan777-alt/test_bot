@@ -2,35 +2,24 @@ version: "3.9"
 
 services:
   db:
-    image: postgres
+    image: postgres:15-alpine
     ports:
-      - "${DBPORT}:5432"
-    env_file:
-      - .env
+      - "5432:5432"
     environment:
       - POSTGRES_USER=${DBUSER}
       - POSTGRES_PASSWORD=${DBPASSWORD}
       - POSTGRES_DB=${DBNAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - mynetwork
 
   app:
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: Dockerfile
     volumes:
-      - .:test_bot
+      - .:/app
     depends_on:
       - db
-    networks:
-      - mynetwork
-    working_dir: /app
-
-networks:
-  mynetwork:
-      driver: bridge
 
 volumes:
   postgres_data:
