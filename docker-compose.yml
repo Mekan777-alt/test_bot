@@ -4,7 +4,7 @@ services:
   db:
     image: postgres
     ports:
-      - "${db_port}:5432"
+      - "${DBPORT}:5432"
     env_file:
       - .env
     environment:
