@@ -37,6 +37,6 @@ async def set_unsubscribe(call: types.CallbackQuery, state: FSMContext, callback
     article_id_from_db.next_message = None
     session.commit()
 
-    await call.message.answer(f"Вы отписались от обновления по артику {callback_data.data}",
+    await call.message.answer(f"Вы отписались от обновления по артикулу {callback_data.data}",
                                     reply_markup=main_markup())
     await state.clear()
