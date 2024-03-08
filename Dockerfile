@@ -4,7 +4,7 @@ COPY requirements.txt /app/requirements.txt
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && pip install --upgrade pip
 
 RUN apt-get update && \
     apt-get install -y redis-server && \
