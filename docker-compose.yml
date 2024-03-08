@@ -8,6 +8,8 @@ services:
     image: postgres:15-alpine
     ports:
       - "5431:5432"
+    env_file:
+      - .env
     environment:
       - POSTGRES_USER=${DBUSER}
       - POSTGRES_PASSWORD=${DBPASSWORD}
@@ -25,18 +27,18 @@ services:
       - .:/app
     depends_on:
       - db
+    env_file:
+      - .env
     environment:
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDISHOST}
       - DB_HOST=db
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     networks:
       - mynetwork
 
   redis:
     image: redis:7.0-alpine
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     networks:
