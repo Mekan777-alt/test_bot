@@ -4,7 +4,7 @@ services:
   db:
     image: postgres:15-alpine
     ports:
-      - "5431:5432"
+      - "5432:5432"
     environment:
       - POSTGRES_USER=${DBUSER}
       - POSTGRES_PASSWORD=${DBPASSWORD}
@@ -12,38 +12,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  redis:
-    image: "redis:latest"
-    ports:
-      - "6380:6379"
-
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - .:/app
     depends_on:
       - db
-      - redis
-      - celery_worker
-
-  celery_worker:
-    build: .
-    volumes:
-      - .:/app
-    depends_on:
-      - db
-      - redis
-    command: celery -A service.celery_app worker --loglevel=info
-
-  celery_beat:
-    build: .
-    volumes:
-      - .:/app
-    depends_on:
-      - db
-      - redis
-      - celery_worker
-    command: celery -A service.celery_app beat --loglevel=info
 
 volumes:
   postgres_data:
