@@ -32,7 +32,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - .:/app
+      - .:/service
     depends_on:
       - db
       - redis
