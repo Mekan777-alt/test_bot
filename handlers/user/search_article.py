@@ -1,12 +1,13 @@
 import asyncio
 from datetime import datetime, timedelta
-from config import session
+from config import session, redis_client
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from context.set_article import SetArticle
 from service.wb import search_article_from_wb
 from buttons.user.main import main_markup, subscribe, CallbackDataSubscribe
 from data.models import User
+import json
 
 router = Router()
 
@@ -75,13 +76,18 @@ async def get_article(message: types.Message, state: FSMContext):
 @router.callback_query(CallbackDataSubscribe.filter())
 async def start_subscribe(call: types.CallbackQuery, callback_data: CallbackDataSubscribe):
 
-    user = session.query(User).filter(User.article_id == str(callback_data.action)).first()
+    current_time = datetime.now().time()
+    time_delta = timedelta(seconds=300)
 
-    current_time = datetime.now()
+    new_time = (datetime.combine(datetime.today(), current_time) + time_delta).time()
 
-    time_delta = current_time + timedelta(minutes=5)
+    redis_key = f"subscription:{callback_data.action}"
+    redis_data = {
+        "user_id": call.from_user.id,
+        "next_message": new_time.strftime("%H:%M:%S"),
+    }
 
-    user.next_message = time_delta.time()
-    session.commit()
+    redis_value = json.dumps(redis_data)
+    redis_client.set(redis_key, redis_value)
 
     await call.message.answer("Вы успешно подписались на обновления!", reply_markup=main_markup())

@@ -1,11 +1,9 @@
-from datetime import datetime
 from aiogram import types, Router, F
 from aiogram.fsm.context import FSMContext
 from context.set_article import UnSubscribe
-from config import session, redis_client
-from data.models import User
-from buttons.user.main import main_markup, unsubscribe, CallbackDataUnsubscribe
-from sqlalchemy.future import select
+from config import redis_client
+from buttons.user.main import main_markup, CallbackDataUnsubscribe, create_unsubscribe_markup
+from service.get_data_from_redis import get_data_from_redis
 
 router = Router()
 
@@ -13,31 +11,30 @@ router = Router()
 @router.message(F.text == '👉 Остановить уведомления')
 async def stop_notification(message: types.Message, state: FSMContext):
     try:
-        users = session.scalar(
-            select(User).where(User.user_id == str(message.from_user.id), User.next_message != None))
+        data = await get_data_from_redis(message.from_user.id)
 
-        if users:
-            await message.answer("Выберите артикул от которого хотите отписаться",
-                                 reply_markup=unsubscribe(message.from_user.id))
+        if data:
+
+            await message.answer(f"Вы подписаны на следующие обновления:",
+                                 reply_markup=await create_unsubscribe_markup(data))
             await state.set_state(UnSubscribe.article)
+
         else:
 
             await message.answer("Вы пока не подписались на обновления", reply_markup=main_markup())
 
-    except Exception as e:
+    except Exception:
 
-        pass
+        await message.answer("Ошибка!, повторите позднее", reply_markup=main_markup())
 
 
 @router.callback_query(CallbackDataUnsubscribe.filter(), UnSubscribe.article)
 async def set_unsubscribe(call: types.CallbackQuery, state: FSMContext, callback_data: CallbackDataUnsubscribe):
     article_id = str(callback_data.action)
 
-    article_id_from_db = session.scalar(select(User).where(User.article_id == article_id))
-
-    redis_key = f"last_message_time:{article_id_from_db.user_id}"
-    redis_client.set(redis_key, datetime.now().isoformat())
+    redis_key = f"subscription:{article_id}"
+    redis_client.delete(redis_key)
 
     await call.message.answer(f"Вы отписались от обновления по артикулу {callback_data.data}",
-                                    reply_markup=main_markup())
+                              reply_markup=main_markup())
     await state.clear()

@@ -1,10 +1,6 @@
-from aiogram.handlers import CallbackQueryHandler
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.filters.callback_data import CallbackData
-from data.models import User
-from sqlalchemy.future import select
-from config import session
 
 
 def main_markup():
@@ -39,23 +35,13 @@ class CallbackDataUnsubscribe(CallbackData, prefix='unsubscribe'):
     data: str
 
 
-def unsubscribe(user_id):
-
+async def create_unsubscribe_markup(subscriptions_list):
     builder = InlineKeyboardBuilder()
 
-    users = session.scalars(select(User).where(User.user_id == str(user_id)))
-
-    for user in users:
-
-        if user.next_message:
-
-            builder.button(
-                text=user.article_id, callback_data=CallbackDataUnsubscribe(data=str(user.article_id),
-                                                                            action=str(user.article_id)))
-        else:
-            pass
+    for subscription in subscriptions_list:
+        builder.button(text=subscription, callback_data=CallbackDataUnsubscribe(action=str(subscription),
+                                                                                data=str(subscription)))
     builder.adjust(1)
-
     return builder.as_markup()
 
 

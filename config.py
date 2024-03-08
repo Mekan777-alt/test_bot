@@ -1,4 +1,7 @@
 import os
+
+from redis.asyncio import Redis
+
 from data.models import Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -22,9 +25,9 @@ engine = create_engine(db_url, echo=False)
 Base.metadata.create_all(engine)
 session = Session(engine)
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-
 token = os.getenv('TOKEN')
 bot = Bot(token=token)
 
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
