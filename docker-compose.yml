@@ -19,6 +19,15 @@ services:
     networks:
       - mynetwork
 
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mynetwork
+
   app:
     build:
       context: .
@@ -30,17 +39,8 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_HOST=${REDISHOST}
+      - REDIS_HOST=redis
       - DB_HOST=db
-    networks:
-      - mynetwork
-
-  redis:
-    image: redis:7.0-alpine
-    ports:
-      - "6380:6379"
-    volumes:
-      - redis_data:/data
     networks:
       - mynetwork
 
