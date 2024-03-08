@@ -30,4 +30,4 @@ bot = Bot(token=token)
 
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
-redis_client = redis.Redis(host='localhost', port=6378, db=0)
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
