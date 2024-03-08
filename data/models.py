@@ -1,6 +1,5 @@
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, DateTime, String, func, TIME
-from datetime import datetime
+from sqlalchemy import Column, Integer, String, TIME
 
 
 Base = declarative_base()
@@ -11,6 +10,5 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(String)
-    time_request = Column(TIME, default=datetime.now().time())
+    time_request = Column(TIME, nullable=False)
     article_id = Column(String, unique=True)
-    next_message = Column(TIME, nullable=True)

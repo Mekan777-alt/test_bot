@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram import Bot, Dispatcher
 from dotenv import load_dotenv
+import redis
 
 
 load_dotenv()
@@ -20,6 +21,8 @@ db_url = f'postgresql://{db_user}:{db_pass}@db:{db_port}/{db_name}'
 engine = create_engine(db_url, echo=False)
 Base.metadata.create_all(engine)
 session = Session(engine)
+
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 token = os.getenv('TOKEN')
 bot = Bot(token=token)

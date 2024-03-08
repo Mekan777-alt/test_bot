@@ -1,7 +1,8 @@
+from datetime import datetime
 from aiogram import types, Router, F
 from aiogram.fsm.context import FSMContext
 from context.set_article import UnSubscribe
-from config import session
+from config import session, redis_client
 from data.models import User
 from buttons.user.main import main_markup, unsubscribe, CallbackDataUnsubscribe
 from sqlalchemy.future import select
@@ -34,8 +35,8 @@ async def set_unsubscribe(call: types.CallbackQuery, state: FSMContext, callback
 
     article_id_from_db = session.scalar(select(User).where(User.article_id == article_id))
 
-    article_id_from_db.next_message = None
-    session.commit()
+    redis_key = f"last_message_time:{article_id_from_db.user_id}"
+    redis_client.set(redis_key, datetime.now().isoformat())
 
     await call.message.answer(f"Вы отписались от обновления по артикулу {callback_data.data}",
                                     reply_markup=main_markup())

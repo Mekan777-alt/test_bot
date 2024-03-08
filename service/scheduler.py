@@ -1,11 +1,12 @@
-import asyncio
 from sqlalchemy.future import select
-from datetime import datetime, timedelta
+from datetime import datetime
 from service.wb import search_article_from_wb
-from config import session, bot
+from config import session, bot, redis_client
 from data.models import User
+from celery_app import app
 
 
+@app.task
 async def send_message(user_id, article_id, current_time):
     data = await search_article_from_wb(article_id)
 
@@ -13,32 +14,23 @@ async def send_message(user_id, article_id, current_time):
                                     f"\n"
                                     f"<b>Название:</b> {data['data']['products'][0]['name']}\n"
                                     f"<b>Артикул:</b> {data['data']['products'][0]['id']}\n"
-                                    f"<b>Цена:</b> {data['data']['products'][0]['priceU']} RUB\n"
-                                    f"<b>Рейтинг товара:</b> {data['data']['products'][0]['rating']}\n"
+                                    f"<b>Цена:</b> {data['data']['products'][0]['priceU']/ 100:.2f} RUB\n"
+                                    f"<b>Цена со скидкой:</b> {data['data']['products'][0]['salePriceU']/ 100:.2f} RUB\n"
+                                    f"<b>Рейтинг товара:</b> {data['data']['products'][0]['reviewRating']}\n"
                                     f"<b>Количество на всех складах:</b> {data['data']['products'][0]['sizes'][0]['stocks'][0]['qty']}",
                            parse_mode='HTML')
 
-    print("Сообщение отправилось")
-
-    user = session.query(User).filter(User.user_id == user_id).first()
-
-    current_datetime = datetime.combine(datetime.now(), current_time)
-
-    time_delta = current_datetime + timedelta(minutes=5)
-
-    user.next_message = time_delta
-    session.commit()
+    redis_key = f"last_message_time:{user_id}"
+    redis_client.set(redis_key, datetime.now().isoformat())
 
 
-async def scheduler():
-    while True:
-        current_time = datetime.now().time()
+@app.task
+def schedule_messages():
+    users = session.scalars(select(User))
 
-        users = session.scalars(select(User))
+    for user in users:
+        redis_key = f"last_message_time:{user.user_id}"
+        last_message_time = redis_client.get(redis_key)
 
-        for user in users:
-            if user.next_message is not None and (current_time >= user.next_message):
-
-                await send_message(user.user_id, user.article_id, current_time)
-
-        await asyncio.sleep(10)
+        if last_message_time is None or (datetime.now() - datetime.fromisoformat(last_message_time)).total_seconds() >= 300:
+            send_message.apply_async(args=[user.user_id, user.article_id])

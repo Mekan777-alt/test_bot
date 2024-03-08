@@ -1,3 +1,4 @@
+from aiogram.handlers import CallbackQueryHandler
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.filters.callback_data import CallbackData
@@ -19,15 +20,18 @@ def main_markup():
     return markup
 
 
-def subscribe():
+class CallbackDataSubscribe(CallbackData, prefix='subscribe'):
+    action: str
 
-    button = [
-        [InlineKeyboardButton(text='👉 Подписаться', callback_data='subscribe')]
-    ]
 
-    markup = InlineKeyboardMarkup(inline_keyboard=button)
+def subscribe(article_id):
+    builder = InlineKeyboardBuilder()
 
-    return markup
+    builder.button(text='👉 Подписаться', callback_data=CallbackDataSubscribe(action=str(article_id)))
+
+    builder.adjust(1)
+
+    return builder.as_markup()
 
 
 class CallbackDataUnsubscribe(CallbackData, prefix='unsubscribe'):

@@ -14,7 +14,7 @@ async def search_article_from_wb(article):
 
     if 'data' in product_data and 'products' in product_data['data'] and product_data['data']['products']:
 
+        print(product_data)
         return product_data
 
     return None
-
